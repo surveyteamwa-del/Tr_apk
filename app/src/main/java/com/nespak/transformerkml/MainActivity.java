@@ -61,9 +61,14 @@ public class MainActivity extends Activity {
 
                 Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
                 intent.addCategory(Intent.CATEGORY_OPENABLE);
-                intent.setType("text/*");
+                intent.setType("*/*");
                 intent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{
-                        "text/csv", "text/comma-separated-values", "text/plain", "application/csv"
+                        "text/csv",
+                        "text/comma-separated-values",
+                        "text/plain",
+                        "application/csv",
+                        "application/vnd.ms-excel",
+                        "application/octet-stream"
                 });
                 startActivityForResult(intent, REQUEST_OPEN_FILE);
                 return true;

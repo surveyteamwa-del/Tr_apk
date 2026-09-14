@@ -123,33 +123,58 @@ function save(text,name,type){
   if(window.Android&&typeof window.Android.saveTextFile==='function'){window.Android.saveTextFile(name,type,text);toast('Choose where to save '+name);return}
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);toast(name+' downloaded');
 }
+function readFileText(f){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(String(r.result||''));r.onerror=()=>reject(r.error||new Error('Unable to read file.'));r.readAsText(f);});}
 async function handleFile(f){
   if(!f)return;try{baseName=(f.name||'transformers').replace(/\.[^.]+$/,'')||'transformers';els.fileName.textContent=f.name||'Survey.csv';els.fileMeta.textContent=((f.size/1024).toFixed(f.size>10240?0:1))+' KB · processing locally';els.filePill.classList.add('show');setStatus('Reading CSV and detecting survey fields…');
-    const recs=parseCsv(await f.text());if(!recs.length)throw new Error('CSV is empty.');const hi=detectHeader(recs),headers=recs[hi].map(v=>String(v??'').trim());source={headers,rows:recs.slice(hi+1)};selectOptions(headers);rebuild();els.fileMeta.textContent=`${normalized.rows.length} usable rows · header row ${hi+1}`;toast('CSV ready for export');
+    const recs=parseCsv(await readFileText(f));if(!recs.length)throw new Error('CSV is empty.');const hi=detectHeader(recs),headers=recs[hi].map(v=>String(v??'').trim());source={headers,rows:recs.slice(hi+1)};selectOptions(headers);rebuild();els.fileMeta.textContent=`${normalized.rows.length} usable rows · header row ${hi+1}`;toast('CSV ready for export');
   }catch(e){source=normalized=null;els.kmlBtn.disabled=els.csvBtn.disabled=true;setStatus('Error: '+e.message,'err');toast('Could not read this CSV')}
 }
-els.file.addEventListener('change',()=>handleFile(els.file.files&&els.file.files[0]));
-for(const id of mapIds)$(id).addEventListener('change',rebuild);
-els.kmlBtn.addEventListener('click',()=>{if(!normalized)return;els.kmlBtn.classList.add('loading');setTimeout(()=>{save(makeKml(),baseName+'.kml','application/vnd.google-earth.kml+xml;charset=utf-8');els.kmlBtn.classList.remove('loading')},120)});
-els.csvBtn.addEventListener('click',()=>normalized&&save(makeCleanCsv(),baseName+'_clean.csv','text/csv;charset=utf-8'));
-els.resetBtn.addEventListener('click',()=>location.reload());
-const mappingToggle=$('mappingToggle'),mappingWrap=$('mappingWrap');mappingToggle.addEventListener('click',()=>{const open=mappingToggle.getAttribute('aria-expanded')!=='true';mappingToggle.setAttribute('aria-expanded',String(open));mappingWrap.classList.toggle('open',open)});
-const uploadZone=$('uploadZone');['dragenter','dragover'].forEach(e=>uploadZone.addEventListener(e,ev=>{ev.preventDefault();uploadZone.classList.add('drag')}));['dragleave','drop'].forEach(e=>uploadZone.addEventListener(e,ev=>{ev.preventDefault();uploadZone.classList.remove('drag')}));uploadZone.addEventListener('drop',e=>handleFile(e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0]));
-const themeBtn=$('themeBtn');function applyTheme(t){document.documentElement.setAttribute('data-theme',t);document.querySelector('meta[name="theme-color"]').setAttribute('content',t==='dark'?'#08111f':'#0B1220');try{localStorage.setItem('kml-theme',t)}catch(e){}}
-let theme='light';try{theme=localStorage.getItem('kml-theme')||'light'}catch(e){}applyTheme(theme);themeBtn.addEventListener('click',()=>{theme=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';applyTheme(theme);toast(theme==='dark'?'Dark theme on':'Light theme on')});
+// Robust event wiring: missing optional controls must never stop the whole app.
+const bind=(el,event,handler)=>{if(el)el.addEventListener(event,handler);return el};
+const byId=(id,event,handler)=>bind($(id),event,handler);
 
+bind(els.file,'change',()=>handleFile(els.file.files&&els.file.files[0]));
+for(const id of mapIds)bind($(id),'change',rebuild);
+bind(els.kmlBtn,'click',()=>{if(!normalized)return;els.kmlBtn.classList.add('loading');setTimeout(()=>{try{save(makeKml(),baseName+'.kml','application/vnd.google-earth.kml+xml;charset=utf-8')}finally{els.kmlBtn.classList.remove('loading')}},120)});
+bind(els.csvBtn,'click',()=>normalized&&save(makeCleanCsv(),baseName+'_clean.csv','text/csv;charset=utf-8'));
+bind(els.resetBtn,'click',()=>location.reload());
+
+const mappingToggle=$('mappingToggle'),mappingWrap=$('mappingWrap');
+bind(mappingToggle,'click',()=>{const open=mappingToggle.getAttribute('aria-expanded')!=='true';mappingToggle.setAttribute('aria-expanded',String(open));if(mappingWrap)mappingWrap.classList.toggle('open',open)});
+const uploadZone=$('uploadZone');
+if(uploadZone){
+  ['dragenter','dragover'].forEach(e=>bind(uploadZone,e,ev=>{ev.preventDefault();uploadZone.classList.add('drag')}));
+  ['dragleave','drop'].forEach(e=>bind(uploadZone,e,ev=>{ev.preventDefault();uploadZone.classList.remove('drag')}));
+  bind(uploadZone,'drop',e=>handleFile(e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0]));
+}
+
+function applyTheme(t){document.documentElement.setAttribute('data-theme',t);const meta=document.querySelector('meta[name="theme-color"]');if(meta)meta.setAttribute('content',t==='dark'?'#08111f':'#00205B');try{localStorage.setItem('kml-theme',t)}catch(e){}}
+let theme='light';try{theme=localStorage.getItem('kml-theme')||'light'}catch(e){}applyTheme(theme);
+function toggleTheme(){theme=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';applyTheme(theme);toast(theme==='dark'?'Dark theme on':'Light theme on')}
+byId('themeToggle','click',toggleTheme);
+byId('themeToggle2','click',toggleTheme);
 
 // Mobile banking-style navigation
 const screens=[...document.querySelectorAll('.screen')];
-function openScreen(id){screens.forEach(s=>s.classList.toggle('active',s.id===id));document.querySelectorAll('[data-screen]').forEach(b=>b.classList.toggle('active',b.dataset.screen===id));window.scrollTo({top:0,behavior:'smooth'});}
-document.querySelectorAll('[data-screen]').forEach(b=>b.addEventListener('click',()=>openScreen(b.dataset.screen)));
-document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>openScreen(b.dataset.go)));
+function openScreen(id){
+  if(!document.getElementById(id))return;
+  screens.forEach(s=>s.classList.toggle('active',s.id===id));
+  document.querySelectorAll('[data-screen]').forEach(b=>b.classList.toggle('active',b.dataset.screen===id));
+  try{window.scrollTo({top:0,behavior:'smooth'})}catch(e){window.scrollTo(0,0)}
+}
+// Delegate navigation taps so all current/future menu buttons remain interactive.
+bind(document,'click',e=>{
+  const go=e.target.closest&&e.target.closest('[data-go]');
+  if(go){e.preventDefault();openScreen(go.dataset.go);return}
+  const nav=e.target.closest&&e.target.closest('[data-screen]');
+  if(nav){e.preventDefault();openScreen(nav.dataset.screen)}
+});
 const menuSheet=$('menuSheet'),menuBackdrop=$('menuBackdrop');
-function toggleMenu(open){menuSheet.classList.toggle('open',open);menuBackdrop.classList.toggle('open',open);document.body.classList.toggle('locked',open)}
-$('openMenu').addEventListener('click',()=>toggleMenu(true));$('closeMenu').addEventListener('click',()=>toggleMenu(false));menuBackdrop.addEventListener('click',()=>toggleMenu(false));
-$('menuConvert').addEventListener('click',()=>{toggleMenu(false);openScreen('convertScreen')});
-$('menuHistory').addEventListener('click',()=>{toggleMenu(false);openScreen('historyScreen')});
-$('menuSettings').addEventListener('click',()=>{toggleMenu(false);openScreen('settingsScreen')});
+function toggleMenu(open){if(menuSheet)menuSheet.classList.toggle('open',open);if(menuBackdrop)menuBackdrop.classList.toggle('open',open);document.body.classList.toggle('locked',open)}
+byId('openMenu','click',()=>toggleMenu(true));byId('closeMenu','click',()=>toggleMenu(false));bind(menuBackdrop,'click',()=>toggleMenu(false));
+byId('menuConvert','click',()=>{toggleMenu(false);openScreen('convertScreen')});
+byId('menuHistory','click',()=>{toggleMenu(false);openScreen('historyScreen')});
+byId('menuSettings','click',()=>{toggleMenu(false);openScreen('settingsScreen')});
 openScreen('homeScreen');
-$('themeToggle2').addEventListener('click',()=>$('themeToggle').click());
+window.addEventListener('error',e=>{try{console.error(e.error||e.message)}catch(_){} });
 </script></body></html>

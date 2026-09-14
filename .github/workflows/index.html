@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#0f4c81" />
+  <meta name="description" content="Convert electrical distribution transformer CSV survey data to KML on desktop or mobile." />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <title>Transformer CSV → KML</title>
+  <style>
+    :root{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#172033;background:#eef3f8}
+    *{box-sizing:border-box} body{margin:0;background:linear-gradient(135deg,#eef4fa,#f8fafc);min-height:100vh}
+    .wrap{max-width:1000px;margin:auto;padding:24px 16px 44px}.hero{background:#0f4c81;color:#fff;border-radius:20px;padding:24px;box-shadow:0 12px 35px rgba(15,76,129,.20)}
+    .hero h1{margin:0 0 8px;font-size:clamp(26px,5vw,40px)}.hero p{margin:0;opacity:.9;line-height:1.5}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px}.card{background:#fff;border-radius:18px;padding:20px;box-shadow:0 5px 20px rgba(15,23,42,.08)}
+    .full{grid-column:1/-1}.step{font-weight:800;font-size:15px;color:#0f4c81;margin-bottom:10px;text-transform:uppercase;letter-spacing:.04em}
+    input[type=file],select{width:100%;padding:13px;border:1px solid #cbd5e1;border-radius:11px;background:#fff;font-size:15px;color:#172033}
+    .mapping{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.mapping label{font-size:13px;font-weight:700;color:#475569;display:block}.mapping select{margin-top:5px}
+    .actions{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}.btn{border:0;border-radius:11px;padding:14px 16px;font-size:15px;font-weight:800;cursor:pointer;background:#0f4c81;color:#fff}.btn.secondary{background:#e7eff7;color:#0f4c81}.btn:disabled{opacity:.45;cursor:not-allowed}
+    .status{margin-top:14px;border-radius:12px;padding:13px 14px;background:#eff6ff;color:#1e3a5f;white-space:pre-wrap;line-height:1.45;font-size:14px}.status.err{background:#fff1f2;color:#9f1239}.status.ok{background:#ecfdf5;color:#065f46}
+    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.stat{padding:14px;border-radius:12px;background:#f8fafc;border:1px solid #e2e8f0}.stat b{display:block;font-size:24px;color:#0f4c81}.stat span{font-size:12px;color:#64748b}
+    .tablewrap{overflow:auto;border:1px solid #e2e8f0;border-radius:12px;margin-top:12px}table{border-collapse:collapse;width:100%;min-width:760px;font-size:13px}th,td{padding:9px 10px;border-bottom:1px solid #e2e8f0;text-align:left;white-space:nowrap}th{position:sticky;top:0;background:#f8fafc;color:#334155}tr:last-child td{border-bottom:0}
+    .note{font-size:13px;color:#64748b;line-height:1.55}.badge{display:inline-block;background:#dbeafe;color:#1e40af;border-radius:999px;padding:4px 9px;font-size:12px;font-weight:700;margin-right:5px}
+    footer{font-size:12px;color:#64748b;text-align:center;margin-top:18px}
+    @media(max-width:720px){.grid{grid-template-columns:1fr}.full{grid-column:auto}.mapping{grid-template-columns:1fr}.actions{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}.hero{border-radius:16px}.card{padding:16px}}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <section class="hero">
+    <h1>Transformer CSV → KML</h1>
+    <p>Upload survey CSV, verify detected fields, and download a Google Earth KML. Processing stays on your device.</p>
+  </section>
+
+  <div class="grid">
+    <section class="card">
+      <div class="step">1 · Upload CSV</div>
+      <input id="file" type="file" accept=".csv,text/csv,text/plain" />
+      <div id="status" class="status">Select a CSV file to begin.</div>
+    </section>
+
+    <section class="card">
+      <div class="step">Output standard</div>
+      <p class="note"><span class="badge">EPSG:32643</span><span class="badge">WGS84</span></p>
+      <p class="note">Coordinates are interpreted as Pakistan UTM Zone 43N and converted to longitude/latitude. If values already look like longitude/latitude, they are retained.</p>
+    </section>
+
+    <section class="card full">
+      <div class="step">2 · Field mapping</div>
+      <div class="mapping">
+        <label>SE<select id="mSE"></select></label>
+        <label>Pole Number<select id="mPole"></select></label>
+        <label>Easting<select id="mE"></select></label>
+        <label>Northing<select id="mN"></select></label>
+        <label>Equipment Type<select id="mEq"></select></label>
+        <label>Equipment Status<select id="mStatus"></select></label>
+        <label>Transformer suffix / Remarks<select id="mRemarks"></select></label>
+        <label>Existing Transformer field (optional)<select id="mTransformer"></select></label>
+      </div>
+      <p class="note" style="margin-bottom:0"><b>Default for your raw survey format:</b> Transformer suffix uses <b>EquipmentUse</b> (original column O), not the old Remarks column U.</p>
+    </section>
+
+    <section class="card full">
+      <div class="step">3 · Preview & export</div>
+      <div class="stats">
+        <div class="stat"><b id="rowCount">0</b><span>usable rows</span></div>
+        <div class="stat"><b id="validCount">0</b><span>valid map points</span></div>
+        <div class="stat"><b id="badCount">0</b><span>invalid coordinates</span></div>
+      </div>
+      <div class="actions">
+        <button id="kmlBtn" class="btn" disabled>Download KML</button>
+        <button id="csvBtn" class="btn secondary" disabled>Download Clean CSV</button>
+        <button id="resetBtn" class="btn secondary">Reset</button>
+      </div>
+      <div class="tablewrap"><table><thead><tr><th>SE</th><th>PoleNumber</th><th>Easting</th><th>Northing</th><th>EquipmentType</th><th>EquipmentStatus</th><th>Remarks</th><th>Transformer</th></tr></thead><tbody id="preview"><tr><td colspan="8">No data loaded.</td></tr></tbody></table></div>
+    </section>
+  </div>
+  <footer>Desktop + mobile browser compatible · No ArcGIS/Python required for conversion</footer>
+</div>
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const els={file:$('file'),status:$('status'),preview:$('preview'),rowCount:$('rowCount'),validCount:$('validCount'),badCount:$('badCount'),kmlBtn:$('kmlBtn'),csvBtn:$('csvBtn'),resetBtn:$('resetBtn')};
+const mapIds=['mSE','mPole','mE','mN','mEq','mStatus','mRemarks','mTransformer'];
+let source=null, normalized=null, baseName='transformers';
+
+function setStatus(msg,type=''){els.status.textContent=msg;els.status.className='status '+type}
+function clean(v){return String(v??'').replace(/transformer/ig,'').trim()}
+function key(v){return String(v??'').trim().replace(/[ _-]/g,'').toLowerCase()}
+function parseCsv(s){
+  if(s.charCodeAt(0)===0xFEFF)s=s.slice(1);
+  const rows=[];let row=[],field='',quoted=false;
+  for(let i=0;i<s.length;i++){
+    const c=s[i];
+    if(quoted){if(c==='"'){if(s[i+1]==='"'){field+='"';i++}else quoted=false}else field+=c}
+    else if(c==='"')quoted=true;
+    else if(c===','){row.push(field);field=''}
+    else if(c==='\n'){row.push(field.endsWith('\r')?field.slice(0,-1):field);rows.push(row);row=[];field=''}
+    else field+=c;
+  }
+  if(field.length||row.length){row.push(field.endsWith('\r')?field.slice(0,-1):field);rows.push(row)}
+  return rows;
+}
+function detectHeader(recs){
+  for(let i=0;i<Math.min(40,recs.length);i++){
+    const ks=recs[i].map(key);
+    if(ks.includes('polenumber')&&ks.includes('easting')&&ks.includes('northing')) return i;
+  }
+  throw new Error('Could not find a header row containing PoleNumber, Easting and Northing.');
+}
+function selectOptions(headers){
+  for(const id of mapIds){const sel=$(id);sel.innerHTML='<option value="">— none —</option>';headers.forEach((h,i)=>{const o=document.createElement('option');o.value=i;o.textContent=(h||('Column '+(i+1)))+'  ['+(i+1)+']';sel.appendChild(o)})}
+  const index={};headers.forEach((h,i)=>{if(key(h))index[key(h)]=i});
+  const set=(id,names)=>{for(const n of names){if(index[key(n)]!==undefined){$(id).value=index[key(n)];return}}};
+  set('mSE',['SE']);set('mPole',['PoleNumber','Pole No']);set('mE',['Easting']);set('mN',['Northing']);set('mEq',['EquipmentType','Equipment Type']);set('mStatus',['EquipmentStatus','Equipment Status']);
+  // Critical new mapping: prefer original column O header EquipmentUse over old Remarks/U.
+  set('mRemarks',['EquipmentUse','Equipment Use','Remarks']);
+  set('mTransformer',['Transformer']);
+}
+function val(r,id){const x=$(id).value;return x===''?'':clean(r[Number(x)])}
+function rebuild(){
+  if(!source)return;
+  let rows=[],valid=0,bad=0;
+  for(const r of source.rows){
+    const pole=val(r,'mPole'), e=val(r,'mE'), n=val(r,'mN'), eq=val(r,'mEq');
+    if(!pole&&!e&&!n&&!eq)continue;
+    // Mirror VBA behavior: if EquipmentType is blank on raw input, skip it.
+    if(!eq)continue;
+    const remarks=val(r,'mRemarks');
+    const existing=val(r,'mTransformer');
+    // If EquipmentUse/Remarks is mapped, always recompute so O mapping wins over an old Transformer value.
+    const transformer=($('mRemarks').value!=='') ? [pole,eq,remarks].join('_') : (existing || [pole,eq,''].join('_'));
+    const x={se:val(r,'mSE'),pole,e,n,eq,status:val(r,'mStatus'),remarks,transformer};
+    const E=Number(e),N=Number(n); if(Number.isFinite(E)&&Number.isFinite(N)){const ll=utm(E,N); if(Number.isFinite(ll[0])&&Number.isFinite(ll[1]))valid++; else bad++}else bad++;
+    rows.push(x);
+  }
+  normalized={rows,valid,bad};render();
+}
+function render(){
+  const r=normalized;els.rowCount.textContent=r.rows.length;els.validCount.textContent=r.valid;els.badCount.textContent=r.bad;
+  els.kmlBtn.disabled=!r.rows.length||!r.valid;els.csvBtn.disabled=!r.rows.length;
+  els.preview.innerHTML='';
+  for(const x of r.rows.slice(0,15)){
+    const tr=document.createElement('tr');[x.se,x.pole,x.e,x.n,x.eq,x.status,x.remarks,x.transformer].forEach(v=>{const td=document.createElement('td');td.textContent=v;tr.appendChild(td)});els.preview.appendChild(tr);
+  }
+  if(!r.rows.length)els.preview.innerHTML='<tr><td colspan="8">No usable rows found.</td></tr>';
+  setStatus(`Ready: ${r.rows.length} usable rows, ${r.valid} valid map points.${r.bad?` ${r.bad} row(s) have invalid coordinates and will be skipped in KML.`:''}`,'ok');
+}
+function utm(E,N){
+  if(Math.abs(E)<=180&&Math.abs(N)<=90)return [E,N];
+  const ZONE=43,a=6378137,e2=.00669438,k0=.9996,x=E-500000,y=N,ep=e2/(1-e2),M=y/k0;
+  const mu=M/(a*(1-e2/4-3*e2*e2/64-5*e2*e2*e2/256)),e1=(1-Math.sqrt(1-e2))/(1+Math.sqrt(1-e2));
+  const p=mu+(3*e1/2-27*e1**3/32)*Math.sin(2*mu)+(21*e1*e1/16-55*e1**4/32)*Math.sin(4*mu)+(151*e1**3/96)*Math.sin(6*mu)+(1097*e1**4/512)*Math.sin(8*mu);
+  const N1=a/Math.sqrt(1-e2*Math.sin(p)**2),T1=Math.tan(p)**2,C1=ep*Math.cos(p)**2,R1=a*(1-e2)/(1-e2*Math.sin(p)**2)**1.5,D=x/(N1*k0);
+  const lat=p-(N1*Math.tan(p)/R1)*(D*D/2-(5+3*T1+10*C1-4*C1*C1-9*ep)*D**4/24+(61+90*T1+298*C1+45*T1*T1-252*ep-3*C1*C1)*D**6/720);
+  const lon=(D-(1+2*T1+C1)*D**3/6+(5-2*C1+28*T1-3*C1*C1+8*ep+24*T1*T1)*D**5/120)/Math.cos(p),origin=(ZONE-1)*6-180+3;
+  return [origin+lon*180/Math.PI,lat*180/Math.PI];
+}
+function xe(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;')}
+function cd(s){return String(s??'').replace(/\]\]>/g,']]]]><![CDATA[>')}
+function data(n,v){return `<Data name="${xe(n)}"><value>${xe(v)}</value></Data>`}
+function makeKml(){
+  let s='<?xml version="1.0" encoding="UTF-8"?>\n<kml xmlns="http://www.opengis.net/kml/2.2"><Document>\n';
+  s+=`<name>${xe(baseName)}</name>\n<Style id="transformer"><IconStyle><scale>0.8</scale></IconStyle><LabelStyle><scale>0.8</scale></LabelStyle></Style>\n`;
+  for(const r of normalized.rows){const E=Number(r.e),N=Number(r.n);if(!Number.isFinite(E)||!Number.isFinite(N))continue;const [lon,lat]=utm(E,N);if(!Number.isFinite(lon)||!Number.isFinite(lat))continue;
+    s+=`<Placemark><name>${xe(r.transformer||r.pole||'Transformer')}</name><styleUrl>#transformer</styleUrl>`;
+    s+=`<description><![CDATA[<b>Pole:</b> ${cd(r.pole)}<br/><b>Equipment:</b> ${cd(r.eq)}<br/><b>Status:</b> ${cd(r.status)}<br/><b>Equipment Use / Remarks:</b> ${cd(r.remarks)}]]></description>`;
+    s+=`<ExtendedData>${data('SE',r.se)}${data('PoleNumber',r.pole)}${data('Easting',r.e)}${data('Northing',r.n)}${data('EquipmentType',r.eq)}${data('EquipmentStatus',r.status)}${data('Remarks',r.remarks)}${data('Transformer',r.transformer)}</ExtendedData>`;
+    s+=`<Point><coordinates>${lon.toFixed(8)},${lat.toFixed(8)},0</coordinates></Point></Placemark>\n`;
+  }
+  return s+'</Document></kml>\n';
+}
+function csvq(v){v=String(v??'');return /[",\r\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}
+function makeCleanCsv(){let s='SE,PoleNumber,Easting,Northing,EquipmentType,EquipmentStatus,Remarks,Transformer\r\n';for(const r of normalized.rows)s+=[r.se,r.pole,r.e,r.n,r.eq,r.status,r.remarks,r.transformer].map(csvq).join(',')+'\r\n';return s}
+function save(text,name,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000)}
+
+els.file.addEventListener('change',async()=>{const f=els.file.files&&els.file.files[0];if(!f)return;try{baseName=(f.name||'transformers').replace(/\.[^.]+$/,'')||'transformers';const recs=parseCsv(await f.text());if(!recs.length)throw new Error('CSV is empty.');const hi=detectHeader(recs),headers=recs[hi].map(v=>String(v??'').trim());source={headers,rows:recs.slice(hi+1)};selectOptions(headers);rebuild()}catch(e){source=normalized=null;els.kmlBtn.disabled=els.csvBtn.disabled=true;setStatus('Error: '+e.message,'err')}});
+for(const id of mapIds)$(id).addEventListener('change',rebuild);
+els.kmlBtn.addEventListener('click',()=>save(makeKml(),baseName+'.kml','application/vnd.google-earth.kml+xml;charset=utf-8'));
+els.csvBtn.addEventListener('click',()=>save(makeCleanCsv(),baseName+'_clean.csv','text/csv;charset=utf-8'));
+els.resetBtn.addEventListener('click',()=>location.reload());
+if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('./sw.js').catch(()=>{});
+</script>
+</body>
+</html>

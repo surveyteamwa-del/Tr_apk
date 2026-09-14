@@ -2,8 +2,10 @@ package com.nespak.transformerkml;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.View;
 import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
@@ -27,7 +29,12 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        getWindow().setStatusBarColor(Color.rgb(11, 18, 32));
+        getWindow().setNavigationBarColor(Color.rgb(11, 18, 32));
+
         webView = new WebView(this);
+        webView.setBackgroundColor(Color.rgb(244, 247, 251));
+        webView.setOverScrollMode(View.OVER_SCROLL_NEVER);
         setContentView(webView);
 
         WebSettings settings = webView.getSettings();
@@ -37,6 +44,10 @@ public class MainActivity extends Activity {
         settings.setAllowContentAccess(true);
         settings.setBuiltInZoomControls(false);
         settings.setDisplayZoomControls(false);
+        settings.setLoadWithOverviewMode(true);
+        settings.setUseWideViewPort(true);
+        settings.setTextZoom(100);
+        settings.setSupportZoom(false);
 
         webView.addJavascriptInterface(new AndroidBridge(), "Android");
         webView.setWebViewClient(new WebViewClient());
@@ -45,9 +56,7 @@ public class MainActivity extends Activity {
             public boolean onShowFileChooser(WebView view,
                                              ValueCallback<Uri[]> callback,
                                              FileChooserParams params) {
-                if (filePathCallback != null) {
-                    filePathCallback.onReceiveValue(null);
-                }
+                if (filePathCallback != null) filePathCallback.onReceiveValue(null);
                 filePathCallback = callback;
 
                 Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
@@ -110,7 +119,7 @@ public class MainActivity extends Activity {
                     if (out == null) throw new IllegalStateException("Unable to open selected file location.");
                     out.write(pendingSaveBytes);
                     out.flush();
-                    Toast.makeText(this, "File saved successfully", Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, "File saved successfully", Toast.LENGTH_SHORT).show();
                 } catch (Exception e) {
                     Toast.makeText(this, "Save failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
                 }
@@ -121,11 +130,8 @@ public class MainActivity extends Activity {
 
     @Override
     public void onBackPressed() {
-        if (webView != null && webView.canGoBack()) {
-            webView.goBack();
-        } else {
-            super.onBackPressed();
-        }
+        if (webView != null && webView.canGoBack()) webView.goBack();
+        else super.onBackPressed();
     }
 
     @Override

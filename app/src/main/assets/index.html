@@ -1,179 +1,43 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover" />
-  <meta name="theme-color" content="#0B1220" />
-  <meta name="description" content="Convert electrical distribution transformer CSV survey data to KML on mobile or desktop." />
-  <title>Transformer KML</title>
-  <style>
-    :root{
-      --bg:#f4f7fb;--surface:#ffffff;--surface2:#eef4fb;--text:#132238;--muted:#66768b;
-      --line:#dce5ef;--primary:#1769e0;--primary2:#0d4fb8;--teal:#0c9b8e;--lime:#a3e635;
-      --orange:#ff9d2e;--danger:#d92d4b;--success:#0e9f6e;--shadow:0 12px 34px rgba(27,55,91,.12);
-      --glass:rgba(255,255,255,.96);--glass-strong:rgba(255,255,255,.88);--primary-soft:rgba(23,105,224,.10);--primary-border:rgba(23,105,224,.25);--teal-soft:rgba(12,155,142,.09);--success-soft:rgba(14,159,110,.11);--danger-soft:rgba(217,45,75,.10);--orange-soft:rgba(255,157,46,.14);
-      --hero:linear-gradient(135deg,#0b1f3a 0%,#123f76 50%,#0c8f91 100%);
-      --radius:22px;--radius-sm:15px;--tap:50px;
-      font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
-      color-scheme:light;
-    }
-    html[data-theme="dark"]{
-      --bg:#08111f;--surface:#0f1b2d;--surface2:#14243a;--text:#edf4ff;--muted:#9eb0c6;
-      --line:#213650;--primary:#5aa2ff;--primary2:#3185ef;--teal:#32c7b8;--lime:#b7f34a;
-      --orange:#ffb452;--danger:#ff6b83;--success:#36d39a;--shadow:0 18px 46px rgba(0,0,0,.28);
-      --glass:rgba(15,27,45,.96);--glass-strong:rgba(15,27,45,.88);--primary-soft:rgba(90,162,255,.13);--primary-border:rgba(90,162,255,.28);--teal-soft:rgba(50,199,184,.12);--success-soft:rgba(54,211,154,.12);--danger-soft:rgba(255,107,131,.11);--orange-soft:rgba(255,180,82,.15);
-      --hero:linear-gradient(135deg,#07111f 0%,#123b6d 55%,#087b79 100%);color-scheme:dark;
-    }
-    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-    html{scroll-behavior:smooth}
-    body{margin:0;min-height:100vh;background:
-      radial-gradient(circle at 92% 2%,rgba(12,155,142,.12),transparent 28%),
-      radial-gradient(circle at 5% 12%,rgba(23,105,224,.12),transparent 25%),var(--bg);color:var(--text)}
-    button,input,select{font:inherit}
-    button{touch-action:manipulation}
-    .app{max-width:980px;margin:0 auto;padding:calc(12px + env(safe-area-inset-top)) 14px calc(112px + env(safe-area-inset-bottom))}
-    .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-    .brand{display:flex;align-items:center;gap:10px;font-weight:900;letter-spacing:-.02em}
-    .brand-mark{width:40px;height:40px;border-radius:13px;background:var(--hero);display:grid;place-items:center;box-shadow:0 7px 18px rgba(23,105,224,.25)}
-    .brand-mark svg{width:24px;height:24px;color:#fff}
-    .brand small{display:block;color:var(--muted);font-weight:700;font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin-top:1px}
-    .icon-btn{width:44px;height:44px;border:1px solid var(--line);border-radius:14px;background:var(--glass);color:var(--text);display:grid;place-items:center;box-shadow:0 5px 15px rgba(20,43,74,.06);cursor:pointer;transition:.18s ease}
-    .icon-btn:active{transform:scale(.94)}.icon-btn svg{width:20px;height:20px}
-    .hero{position:relative;overflow:hidden;background:var(--hero);color:#fff;border-radius:28px;padding:24px 20px 22px;box-shadow:0 20px 50px rgba(15,53,98,.24)}
-    .hero:after{content:"";position:absolute;right:-60px;top:-70px;width:210px;height:210px;border:40px solid rgba(255,255,255,.08);border-radius:50%}
-    .hero-row{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;position:relative;z-index:1}
-    .eyebrow{display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.16);border-radius:999px;padding:7px 10px;font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;margin-bottom:12px}
-    .pulse{width:8px;height:8px;border-radius:50%;background:#b7f34a;box-shadow:0 0 0 5px rgba(183,243,74,.14)}
-    .hero h1{margin:0;font-size:clamp(28px,7vw,43px);line-height:1.02;letter-spacing:-.045em;max-width:670px}
-    .hero p{margin:11px 0 0;max-width:670px;line-height:1.55;font-size:14px;color:rgba(255,255,255,.82)}
-    .privacy{position:relative;z-index:1;display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}
-    .chip{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:7px 10px;font-size:11px;font-weight:800;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.14)}
-    .chip svg{width:14px;height:14px}
-    .content{display:grid;gap:14px;margin-top:14px}
-    .card{background:var(--glass);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:17px;backdrop-filter:blur(8px)}
-    .card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:13px}
-    .card-title{display:flex;align-items:center;gap:10px;font-weight:900;letter-spacing:-.02em}
-    .card-title .ico{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;background:var(--surface2);color:var(--primary)}
-    .card-title .ico svg{width:19px;height:19px}
-    .card-title span small{display:block;color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.02em;margin-top:2px}
-    .upload{position:relative;border:1.6px dashed var(--primary-border);border-radius:20px;background:linear-gradient(135deg,var(--primary-soft),var(--teal-soft));padding:24px 16px;text-align:center;cursor:pointer;transition:.2s ease;overflow:hidden}
-    .upload:active{transform:scale(.99)}.upload.drag{border-color:var(--teal);background:var(--teal-soft)}
-    .upload-icon{width:66px;height:66px;border-radius:21px;margin:0 auto 13px;display:grid;place-items:center;background:linear-gradient(145deg,var(--primary),var(--teal));color:#fff;box-shadow:0 14px 30px rgba(23,105,224,.24);transition:.2s ease}
-    .upload:active .upload-icon{transform:translateY(2px) scale(.96)}.upload-icon svg{width:31px;height:31px}
-    .upload h2{font-size:17px;margin:0 0 5px;letter-spacing:-.02em}.upload p{margin:0;color:var(--muted);font-size:12px;line-height:1.45}
-    .upload input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
-    .file-pill{display:none;align-items:center;gap:10px;margin-top:12px;padding:11px 12px;border:1px solid var(--line);border-radius:14px;background:var(--surface2)}
-    .file-pill.show{display:flex}.file-type{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:var(--teal);color:#fff;font-weight:900;font-size:11px}.file-text{min-width:0;flex:1}.file-text b{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.file-text span{font-size:11px;color:var(--muted)}
-    .status{display:flex;align-items:flex-start;gap:10px;margin-top:12px;padding:12px 13px;border-radius:15px;background:var(--primary-soft);border:1px solid var(--primary-border);color:var(--text);font-size:12.5px;line-height:1.45}
-    .status .status-ico{flex:0 0 auto;width:25px;height:25px;border-radius:9px;display:grid;place-items:center;background:var(--primary);color:#fff}.status svg{width:14px;height:14px}
-    .status.ok{background:var(--success-soft);border-color:var(--success)}.status.ok .status-ico{background:var(--success)}
-    .status.err{background:var(--danger-soft);border-color:var(--danger)}.status.err .status-ico{background:var(--danger)}
-    .spec-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.spec{padding:12px 8px;border:1px solid var(--line);border-radius:14px;background:var(--surface2);text-align:center}.spec b{font-size:13px;display:block;color:var(--text)}.spec span{font-size:10px;color:var(--muted)}
-    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.stat{border-radius:16px;padding:13px 10px;border:1px solid var(--line);background:linear-gradient(160deg,var(--surface),var(--surface2));min-width:0}.stat-row{display:flex;align-items:center;gap:8px}.stat-icon{width:34px;height:34px;border-radius:11px;display:grid;place-items:center}.stat-icon svg{width:17px;height:17px}.stat:nth-child(1) .stat-icon{background:var(--primary-soft);color:var(--primary)}.stat:nth-child(2) .stat-icon{background:var(--success-soft);color:var(--success)}.stat:nth-child(3) .stat-icon{background:var(--orange-soft);color:var(--orange)}
-    .stat b{font-size:22px;line-height:1;display:block;letter-spacing:-.03em}.stat span{display:block;color:var(--muted);font-size:10.5px;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .toggle{width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;border:0;background:none;color:var(--text);padding:0;cursor:pointer;text-align:left}.toggle-copy b{display:block;font-size:14px}.toggle-copy span{font-size:11px;color:var(--muted)}.chev{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:var(--surface2);transition:.2s}.chev svg{width:18px;height:18px;transition:.2s}.toggle[aria-expanded="true"] .chev svg{transform:rotate(180deg)}
-    .mapping-wrap{display:grid;grid-template-rows:0fr;transition:grid-template-rows .25s ease}.mapping-wrap.open{grid-template-rows:1fr}.mapping-inner{overflow:hidden}.mapping{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding-top:14px}.field label{display:block;font-size:11px;color:var(--muted);font-weight:800;margin:0 0 5px 3px}.field select{width:100%;min-height:46px;border:1px solid var(--line);border-radius:13px;background:var(--surface2);color:var(--text);padding:0 36px 0 11px;outline:none}.field select:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft)}
-    .note{display:flex;gap:9px;align-items:flex-start;margin-top:12px;padding:10px 11px;background:var(--teal-soft);border-radius:13px;color:var(--muted);font-size:11.5px;line-height:1.45}.note svg{flex:0 0 auto;width:17px;height:17px;color:var(--teal);margin-top:1px}.note b{color:var(--text)}
-    .preview-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:9px}.preview-head span{font-size:11px;color:var(--muted)}
-    .tablewrap{overflow:auto;border:1px solid var(--line);border-radius:15px;background:var(--surface);max-height:310px}.tablewrap::-webkit-scrollbar{height:7px;width:7px}.tablewrap::-webkit-scrollbar-thumb{background:rgba(102,118,139,.30);border-radius:99px}table{border-collapse:separate;border-spacing:0;width:100%;min-width:820px;font-size:11.5px}th,td{padding:10px 11px;border-bottom:1px solid var(--line);white-space:nowrap;text-align:left}th{position:sticky;top:0;z-index:2;background:var(--surface2);color:var(--muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.04em}tr:last-child td{border-bottom:0}tbody tr:active{background:var(--primary-soft)}
-    .actions{display:grid;grid-template-columns:1.4fr 1fr auto;gap:9px;margin-top:13px}.btn{min-height:var(--tap);border:0;border-radius:15px;padding:0 15px;font-weight:900;font-size:13px;display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;transition:.18s ease;position:relative;overflow:hidden}.btn:active:not(:disabled){transform:scale(.97)}.btn svg{width:18px;height:18px}.btn.primary{background:linear-gradient(135deg,var(--primary),var(--primary2));color:#fff;box-shadow:0 9px 22px rgba(23,105,224,.28)}.btn.secondary{background:var(--surface2);color:var(--text);border:1px solid var(--line)}.btn.icon-only{width:var(--tap);padding:0}.btn:disabled{opacity:.42;cursor:not-allowed;box-shadow:none}.btn .spinner{display:none;width:17px;height:17px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:spin .75s linear infinite}.btn.loading .spinner{display:block}.btn.loading .btn-icon{display:none}@keyframes spin{to{transform:rotate(360deg)}}
-    .footer{text-align:center;color:var(--muted);font-size:10.5px;margin:18px 0 4px}.footer b{color:var(--text)}
-    .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translate(-50%,20px);opacity:0;pointer-events:none;z-index:1000;background:#101827;color:#fff;padding:11px 14px;border-radius:13px;box-shadow:0 12px 30px rgba(0,0,0,.28);font-size:12px;font-weight:800;transition:.23s;max-width:min(88vw,460px);text-align:center}.toast.show{transform:translate(-50%,0);opacity:1}
-    @media(min-width:760px){.content{grid-template-columns:1fr 1fr}.span2{grid-column:1/-1}.card{padding:19px}.app{padding-left:20px;padding-right:20px}.hero{padding:30px}.stats .stat{padding:15px}}
-    @media(max-width:620px){.app{padding-left:11px;padding-right:11px}.hero{border-radius:22px}.hero h1{font-size:30px}.content{gap:11px}.card{border-radius:18px;padding:14px}.mapping{grid-template-columns:1fr}.stats{gap:7px}.stat{padding:11px 7px}.stat-icon{width:31px;height:31px}.stat b{font-size:20px}.actions{position:sticky;bottom:calc(8px + env(safe-area-inset-bottom));z-index:20;background:var(--glass-strong);backdrop-filter:blur(16px);border:1px solid var(--line);padding:8px;border-radius:18px;box-shadow:0 12px 36px rgba(9,23,42,.18);grid-template-columns:1.5fr 1fr 50px}.btn{font-size:12px;padding:0 10px}.upload{padding:21px 12px}.upload-icon{width:61px;height:61px}.spec-grid{gap:6px}.spec{padding:10px 5px}.brand small{display:none}}
-    @media(max-width:390px){.btn .label-long{display:none}.hero p{font-size:13px}.privacy .chip:last-child{display:none}.stats .stat span{font-size:9.8px}.actions{grid-template-columns:1.35fr 1fr 48px}}
-  </style>
-</head>
-<body>
-<div class="app">
-  <header class="topbar">
-    <div class="brand">
-      <div class="brand-mark" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M4 7h16M7 12h10v7H7z"/><path d="M9 15h6"/></svg>
-      </div>
-      <div>Transformer KML<small>Survey Converter</small></div>
-    </div>
-    <button id="themeBtn" class="icon-btn" type="button" aria-label="Toggle color theme" title="Toggle theme">
-      <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
-    </button>
-  </header>
-
-  <section class="hero">
-    <div class="hero-row">
-      <div>
-        <div class="eyebrow"><span class="pulse"></span>Offline conversion</div>
-        <h1>Survey CSV to Google Earth KML</h1>
-        <p>Fast field conversion for transformer survey data. Your CSV stays on the device and is never uploaded to a server.</p>
-      </div>
-    </div>
-    <div class="privacy">
-      <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>Private</span>
-      <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>One-tap export</span>
-      <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Works offline</span>
-    </div>
-  </section>
-
-  <main class="content">
-    <section class="card">
-      <div class="card-head">
-        <div class="card-title"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg></div><span>Choose survey file<small>CSV from phone storage, WhatsApp or Downloads</small></span></div>
-      </div>
-      <label id="uploadZone" class="upload">
-        <div class="upload-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M5 20h14"/></svg></div>
-        <h2>Tap to select CSV</h2>
-        <p>Header row is detected automatically. Extra rows above the header are ignored.</p>
-        <input id="file" type="file" accept=".csv,text/csv,text/plain" />
-      </label>
-      <div id="filePill" class="file-pill"><div class="file-type">CSV</div><div class="file-text"><b id="fileName">—</b><span id="fileMeta">Ready to process</span></div></div>
-      <div id="status" class="status"><div class="status-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg></div><div id="statusText">Select a CSV file to begin.</div></div>
-    </section>
-
-    <section class="card">
-      <div class="card-head"><div class="card-title"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M7 3v6M17 3v6M5 12h14v8H5z"/><path d="M8 16h.01M12 16h.01M16 16h.01"/></svg></div><span>Conversion standard<small>Configured for your transformer survey workflow</small></span></div></div>
-      <div class="spec-grid"><div class="spec"><b>EPSG:32643</b><span>Input CRS</span></div><div class="spec"><b>WGS 84</b><span>KML output</span></div><div class="spec"><b>Column O</b><span>EquipmentUse</span></div></div>
-      <div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg><div>Transformer label is generated as <b>PoleNumber + EquipmentType + EquipmentUse</b>. EquipmentUse is preferred over the old Remarks/U field.</div></div>
-    </section>
-
-    <section class="card span2">
-      <div class="card-head"><div class="card-title"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M7 12h10M10 18h4"/></svg></div><span>Conversion summary<small>Live validation before KML export</small></span></div></div>
-      <div class="stats">
-        <div class="stat"><div class="stat-row"><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M4 9h16M9 4v16"/></svg></div><div><b id="rowCount">0</b><span>Usable rows</span></div></div></div>
-        <div class="stat"><div class="stat-row"><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0z"/><circle cx="12" cy="10" r="2.5"/></svg></div><div><b id="validCount">0</b><span>Valid points</span></div></div></div>
-        <div class="stat"><div class="stat-row"><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 2 21h20L12 3z"/><path d="M12 9v5M12 17h.01"/></svg></div><div><b id="badCount">0</b><span>Skipped points</span></div></div></div>
-      </div>
-    </section>
-
-    <section class="card span2">
-      <button id="mappingToggle" class="toggle" type="button" aria-expanded="false">
-        <div class="card-title"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h6M14 6h6M4 12h10M18 12h2M4 18h3M11 18h9"/><circle cx="12" cy="6" r="2"/><circle cx="16" cy="12" r="2"/><circle cx="9" cy="18" r="2"/></svg></div><span class="toggle-copy"><b>Advanced field mapping</b><span>Auto-detected — open only if you need to change a column</span></span></div>
-        <div class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div>
-      </button>
-      <div id="mappingWrap" class="mapping-wrap"><div class="mapping-inner"><div class="mapping">
-        <div class="field"><label>SE</label><select id="mSE"></select></div>
-        <div class="field"><label>Pole Number</label><select id="mPole"></select></div>
-        <div class="field"><label>Easting</label><select id="mE"></select></div>
-        <div class="field"><label>Northing</label><select id="mN"></select></div>
-        <div class="field"><label>Equipment Type</label><select id="mEq"></select></div>
-        <div class="field"><label>Equipment Status</label><select id="mStatus"></select></div>
-        <div class="field"><label>Transformer suffix / Remarks</label><select id="mRemarks"></select></div>
-        <div class="field"><label>Existing Transformer field</label><select id="mTransformer"></select></div>
-      </div></div></div>
-    </section>
-
-    <section class="card span2">
-      <div class="preview-head"><div class="card-title"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 5h18v14H3z"/><path d="M3 10h18M8 5v14"/></svg></div><span>Data preview<small>First 15 converted records</small></span></div><span>Swipe table →</span></div>
-      <div class="tablewrap"><table><thead><tr><th>SE</th><th>PoleNumber</th><th>Easting</th><th>Northing</th><th>EquipmentType</th><th>EquipmentStatus</th><th>EquipmentUse</th><th>Transformer</th></tr></thead><tbody id="preview"><tr><td colspan="8">No data loaded.</td></tr></tbody></table></div>
-      <div class="actions">
-        <button id="kmlBtn" class="btn primary" type="button" disabled><span class="spinner"></span><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg><span>Save KML</span></button>
-        <button id="csvBtn" class="btn secondary" type="button" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg><span class="label-long">Clean </span>CSV</button>
-        <button id="resetBtn" class="btn secondary icon-only" type="button" title="Reset" aria-label="Reset"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></button>
-      </div>
-    </section>
-  </main>
-
-  <div class="footer"><b>Transformer KML</b> · Mobile-first offline converter · No ArcGIS or Python required</div>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover" />
+<meta name="theme-color" content="#00205B" />
+<title>Transformer KML</title>
+<style>
+:root{--navy:#00205b;--blue:#008bd2;--green:#00a651;--bg:#f3f5f8;--surface:#fff;--text:#111827;--muted:#6b7280;--line:#e6e9ef;--soft:#eef7ff;--mint:#eaf9f1;--amber:#f4a32c;--danger:#d83b51;--shadow:0 10px 28px rgba(0,32,91,.10);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color-scheme:light}
+html[data-theme=dark]{--bg:#091321;--surface:#111d2d;--text:#f6f8fc;--muted:#9cabc0;--line:#203149;--soft:#102b43;--mint:#0f3326;color-scheme:dark}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text)}body.locked{overflow:hidden}button,input,select{font:inherit}.app-shell{max-width:520px;margin:auto;min-height:100vh;padding:calc(10px + env(safe-area-inset-top)) 14px calc(92px + env(safe-area-inset-bottom))}.screen{display:none;animation:fade .2s ease}.screen.active{display:block}@keyframes fade{from{opacity:.45;transform:translateY(5px)}to{opacity:1;transform:none}}
+.top{height:54px;display:flex;align-items:center;gap:10px}.brandmark{width:38px;height:38px;border-radius:12px;background:linear-gradient(145deg,var(--navy),var(--blue));display:grid;place-items:center;color:#fff;font-weight:900}.brandcopy{line-height:1.1}.brandcopy b{display:block;font-size:15px}.brandcopy span{font-size:10px;color:var(--muted)}.grow{flex:1}.circle-btn{width:42px;height:42px;border:0;border-radius:14px;background:var(--surface);box-shadow:var(--shadow);display:grid;place-items:center;color:var(--navy)}.circle-btn svg{width:21px;height:21px}.hero{background:linear-gradient(135deg,#00205b 0%,#0066a7 62%,#00a651 130%);color:#fff;border-radius:25px;padding:20px;box-shadow:0 18px 40px rgba(0,32,91,.22);position:relative;overflow:hidden}.hero:after{content:"";position:absolute;width:170px;height:170px;border:32px solid rgba(255,255,255,.08);border-radius:50%;right:-60px;top:-70px}.eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:10px;font-weight:800;letter-spacing:.06em;background:rgba(255,255,255,.13);padding:7px 10px;border-radius:999px}.dot{width:7px;height:7px;border-radius:50%;background:#62e69b}.hero h1{font-size:27px;line-height:1.08;margin:13px 0 8px;letter-spacing:-.035em}.hero p{font-size:12px;line-height:1.5;margin:0;color:rgba(255,255,255,.82)}.hero-actions{display:flex;gap:8px;margin-top:16px}.hero-actions button{border:0;border-radius:13px;min-height:42px;padding:0 14px;font-weight:800}.primary-mini{background:#fff;color:var(--navy)}.ghost-mini{background:rgba(255,255,255,.13);color:#fff;border:1px solid rgba(255,255,255,.18)!important}
+.section-title{margin:20px 2px 10px}.section-title b{font-size:17px}.section-title span{display:block;font-size:11px;color:var(--muted);margin-top:2px}.quick-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.quick{border:0;background:var(--surface);border-radius:20px;box-shadow:var(--shadow);padding:13px 10px;text-align:left;color:var(--text);min-height:106px}.quick .qi{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;color:#fff;margin-bottom:9px}.quick:nth-child(1) .qi{background:var(--green)}.quick:nth-child(2) .qi{background:var(--blue)}.quick:nth-child(3) .qi{background:var(--navy)}.quick b{display:block;font-size:12px}.quick span{font-size:9px;color:var(--muted)}.card{background:var(--surface);border:1px solid var(--line);border-radius:21px;box-shadow:var(--shadow);padding:15px;margin-top:12px}.card-head{display:flex;align-items:center;gap:10px}.card-head .ico{width:38px;height:38px;border-radius:12px;background:var(--soft);color:var(--blue);display:grid;place-items:center}.card-head .ico svg{width:19px;height:19px}.card-head b{font-size:14px}.card-head span{display:block;font-size:10px;color:var(--muted);margin-top:2px}.status-pill{margin-left:auto;padding:6px 9px;border-radius:999px;background:var(--mint);color:var(--green);font-size:9px;font-weight:900}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}.stat{background:var(--bg);border-radius:14px;padding:11px}.stat b{font-size:19px;color:var(--navy)}html[data-theme=dark] .stat b{color:#8ec7ff}.stat span{display:block;font-size:9px;color:var(--muted);margin-top:3px}.privacy{display:flex;gap:8px;align-items:center;background:var(--mint);border-radius:15px;padding:11px;margin-top:12px;font-size:10.5px}.privacy strong{color:var(--green)}
+.page-title{margin:9px 0 16px}.page-title h2{font-size:24px;margin:0;letter-spacing:-.035em}.page-title p{font-size:11px;color:var(--muted);margin:4px 0 0}.upload{position:relative;border:1.5px dashed #9dc9ec;background:var(--soft);border-radius:20px;padding:22px 14px;text-align:center}.upload-icon{width:58px;height:58px;margin:auto;border-radius:19px;background:linear-gradient(145deg,var(--blue),var(--green));color:#fff;display:grid;place-items:center}.upload-icon svg{width:28px}.upload h2{font-size:15px;margin:10px 0 4px}.upload p{font-size:10px;color:var(--muted);margin:0}.upload input{position:absolute;inset:0;width:100%;height:100%;opacity:0}.file-pill{display:none;margin-top:10px;padding:10px;border:1px solid var(--line);border-radius:13px;background:var(--bg)}.file-pill.show{display:flex}.file-type{font-size:10px;font-weight:900;background:var(--green);color:#fff;border-radius:9px;padding:9px}.file-text{padding-left:9px;min-width:0}.file-text b{font-size:11px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.file-text span{font-size:9px;color:var(--muted)}.status{display:flex;gap:8px;margin-top:10px;border-radius:14px;background:var(--soft);padding:10px;font-size:10px;line-height:1.35}.status-ico{width:24px;height:24px;border-radius:8px;background:var(--blue);display:grid;place-items:center;color:#fff;flex:0 0 auto}.status-ico svg{width:13px}.status.ok{background:var(--mint)}.status.ok .status-ico{background:var(--green)}.status.err{background:#fff0f2}.status.err .status-ico{background:var(--danger)}.progress-flow{display:grid;grid-template-columns:repeat(3,1fr);margin:14px 0}.pf{text-align:center;position:relative;font-size:9px;color:var(--muted)}.pf:before{content:"";position:absolute;height:2px;background:var(--line);left:-50%;right:50%;top:14px}.pf:first-child:before{display:none}.pf i{font-style:normal;width:30px;height:30px;border-radius:50%;background:var(--soft);display:grid;place-items:center;margin:auto auto 4px;font-weight:900;color:var(--blue);position:relative;z-index:1}.pf.on i{background:var(--green);color:#fff}.spec-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px}.spec{background:var(--bg);border-radius:13px;padding:10px;text-align:center}.spec b{font-size:10px}.spec span{display:block;font-size:8px;color:var(--muted)}.toggle{width:100%;display:flex;align-items:center;border:0;background:none;padding:0;color:var(--text);text-align:left}.toggle-copy b{font-size:12px}.toggle-copy span{display:block;font-size:9px;color:var(--muted)}.chev{margin-left:auto}.mapping-wrap{display:grid;grid-template-rows:0fr;transition:.22s}.mapping-wrap.open{grid-template-rows:1fr}.mapping-inner{overflow:hidden}.mapping{display:grid;grid-template-columns:1fr;gap:8px;padding-top:12px}.field label{font-size:9px;color:var(--muted);font-weight:800}.field select{width:100%;min-height:46px;border:1px solid var(--line);background:var(--bg);color:var(--text);border-radius:12px;padding:0 10px}.note{font-size:9.5px;color:var(--muted);padding:9px;border-radius:11px;background:var(--mint);margin-top:9px}.note svg{display:none}.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:14px;margin-top:10px}table{border-collapse:collapse;min-width:760px;width:100%;font-size:9px}th,td{padding:8px;border-bottom:1px solid var(--line);white-space:nowrap;text-align:left}th{background:var(--bg)}.actions{display:flex;gap:8px;margin-top:12px}.btn{min-height:50px;border:0;border-radius:15px;font-weight:900;display:flex;align-items:center;justify-content:center;gap:7px}.btn.primary{background:var(--green);color:#fff;flex:1}.btn.secondary{background:var(--soft);color:var(--blue);padding:0 13px}.btn svg{width:18px}.btn:disabled{opacity:.45}.spinner{display:none}.preview-head{display:flex;align-items:center}.preview-head>span{margin-left:auto;font-size:9px;color:var(--muted)}
+.bottom-nav{position:fixed;z-index:50;bottom:calc(8px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);width:min(492px,calc(100% - 22px));background:rgba(255,255,255,.96);border:1px solid var(--line);border-radius:22px;box-shadow:0 16px 42px rgba(0,32,91,.16);padding:7px;display:grid;grid-template-columns:repeat(4,1fr);backdrop-filter:blur(14px)}html[data-theme=dark] .bottom-nav{background:rgba(17,29,45,.96)}.nav-btn{border:0;background:transparent;border-radius:15px;min-height:54px;color:var(--muted);font-size:9px;font-weight:800;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}.nav-btn svg{width:20px;height:20px}.nav-btn.active{background:var(--mint);color:var(--green)}
+.menu-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.35);opacity:0;pointer-events:none;z-index:80;transition:.2s}.menu-backdrop.open{opacity:1;pointer-events:auto}.menu-sheet{position:fixed;right:0;top:0;bottom:0;width:min(350px,88vw);background:var(--surface);z-index:90;transform:translateX(105%);transition:.25s;padding:calc(18px + env(safe-area-inset-top)) 15px 20px;box-shadow:-18px 0 50px rgba(0,0,0,.18)}.menu-sheet.open{transform:none}.menu-head{display:flex;align-items:center;gap:10px;margin-bottom:18px}.menu-list button{width:100%;border:0;background:transparent;color:var(--text);min-height:58px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:11px;text-align:left}.menu-list .mi{width:36px;height:36px;border-radius:11px;background:var(--soft);color:var(--blue);display:grid;place-items:center}.menu-list b{display:block;font-size:12px}.menu-list span{display:block;font-size:9px;color:var(--muted)}.settings-row{display:flex;align-items:center;gap:11px;min-height:60px;border-bottom:1px solid var(--line)}.settings-row b{font-size:12px}.settings-row span{display:block;font-size:9px;color:var(--muted)}.history-empty{text-align:center;padding:44px 20px;color:var(--muted)}.history-empty .big{font-size:42px;color:var(--blue)}.toast{position:fixed;left:50%;bottom:100px;transform:translate(-50%,12px);opacity:0;background:#111827;color:#fff;border-radius:999px;padding:10px 14px;font-size:10px;z-index:120;transition:.2s}.toast.show{opacity:1;transform:translate(-50%,0)}
+@media(min-width:700px){.app-shell{max-width:980px}.screen.active{max-width:620px;margin:auto}.mapping{grid-template-columns:repeat(2,1fr)}}
+</style></head><body>
+<div class="app-shell">
+<section id="homeScreen" class="screen active">
+ <div class="top"><div class="brandmark">T</div><div class="brandcopy"><b>Transformer KML</b><span>Mobile Survey Utility</span></div><div class="grow"></div><button id="themeToggle" class="circle-btn" aria-label="Theme"><svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg></button><button id="openMenu" class="circle-btn" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></div>
+ <div class="hero"><div class="eyebrow"><span class="dot"></span>OFFLINE & PRIVATE</div><h1>Survey CSV to<br>Google Earth KML</h1><p>Fast field conversion designed like a modern banking app: simple, guided and thumb-friendly.</p><div class="hero-actions"><button class="primary-mini" data-go="convertScreen">Convert CSV</button><button class="ghost-mini" data-go="historyScreen">History</button></div></div>
+ <div class="section-title"><b>Quick actions</b><span>Everything important within one tap</span></div><div class="quick-grid"><button class="quick" data-go="convertScreen"><div class="qi">⇄</div><b>Convert CSV</b><span>Create KML</span></button><button class="quick" data-go="historyScreen"><div class="qi">◷</div><b>History</b><span>Recent exports</span></button><button class="quick" data-go="settingsScreen"><div class="qi">≡</div><b>Settings</b><span>Mapping & theme</span></button></div>
+ <div class="card"><div class="card-head"><div class="ico">✓</div><div><b>Conversion status</b><span>Ready for a survey file</span></div><div class="status-pill">READY</div></div><div class="stats"><div class="stat"><b>0</b><span>Rows</span></div><div class="stat"><b>0</b><span>Valid</span></div><div class="stat"><b>0</b><span>Skipped</span></div></div></div><div class="privacy"><strong>✓ Private</strong> CSV processing stays on your device.</div>
+</section>
+<section id="convertScreen" class="screen">
+ <div class="top"><button class="circle-btn" data-go="homeScreen">‹</button><div class="brandcopy"><b>Convert Survey File</b><span>CSV → KML</span></div><div class="grow"></div><button class="circle-btn" data-go="settingsScreen">?</button></div>
+ <div class="page-title"><h2>New conversion</h2><p>Choose your survey CSV and export a Google Earth KML.</p></div>
+ <div class="card"><label id="uploadZone" class="upload"><div class="upload-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></svg></div><h2>Tap to select CSV</h2><p>Downloads, WhatsApp or phone storage</p><input id="file" type="file" accept=".csv,text/csv,text/plain"></label><div id="filePill" class="file-pill"><div class="file-type">CSV</div><div class="file-text"><b id="fileName">—</b><span id="fileMeta">Ready</span></div></div><div id="status" class="status"><div class="status-ico">i</div><div id="statusText">Select a CSV file to begin.</div></div></div>
+ <div class="progress-flow"><div class="pf on"><i>1</i>File</div><div class="pf"><i>2</i>Validate</div><div class="pf"><i>3</i>Export</div></div>
+ <div class="card"><div class="card-head"><div class="ico">⌖</div><div><b>Conversion standard</b><span>Transformer survey workflow</span></div></div><div class="spec-grid"><div class="spec"><b>EPSG:32643</b><span>Input CRS</span></div><div class="spec"><b>WGS 84</b><span>Output</span></div><div class="spec"><b>Column O</b><span>EquipmentUse</span></div></div><div class="note">Transformer = PoleNumber + EquipmentType + EquipmentUse.</div></div>
+ <div class="card"><div class="card-head"><div class="ico">#</div><div><b>Conversion summary</b><span>Live validation</span></div></div><div class="stats"><div class="stat"><b id="rowCount">0</b><span>Rows</span></div><div class="stat"><b id="validCount">0</b><span>Valid</span></div><div class="stat"><b id="badCount">0</b><span>Skipped</span></div></div></div>
+ <div class="card"><button id="mappingToggle" class="toggle" aria-expanded="false"><div class="card-head"><div class="ico">⚙</div><div class="toggle-copy"><b>Advanced field mapping</b><span>Auto-detected · tap to edit</span></div></div><div class="chev">⌄</div></button><div id="mappingWrap" class="mapping-wrap"><div class="mapping-inner"><div class="mapping"><div class="field"><label>SE</label><select id="mSE"></select></div><div class="field"><label>Pole Number</label><select id="mPole"></select></div><div class="field"><label>Easting</label><select id="mE"></select></div><div class="field"><label>Northing</label><select id="mN"></select></div><div class="field"><label>Equipment Type</label><select id="mEq"></select></div><div class="field"><label>Equipment Status</label><select id="mStatus"></select></div><div class="field"><label>EquipmentUse</label><select id="mRemarks"></select></div><div class="field"><label>Existing Transformer</label><select id="mTransformer"></select></div></div></div></div></div>
+ <div class="card"><div class="preview-head"><div class="card-head"><div class="ico">▦</div><div><b>Data preview</b><span>First 15 records</span></div></div><span>Swipe →</span></div><div class="tablewrap"><table><thead><tr><th>SE</th><th>PoleNumber</th><th>Easting</th><th>Northing</th><th>EquipmentType</th><th>EquipmentStatus</th><th>EquipmentUse</th><th>Transformer</th></tr></thead><tbody id="preview"><tr><td colspan="8">No data loaded.</td></tr></tbody></table></div><div class="actions"><button id="kmlBtn" class="btn primary" disabled><span class="spinner"></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span>Save KML</span></button><button id="csvBtn" class="btn secondary" disabled>CSV</button><button id="resetBtn" class="btn secondary">↻</button></div></div>
+</section>
+<section id="historyScreen" class="screen"><div class="top"><button class="circle-btn" data-go="homeScreen">‹</button><div class="brandcopy"><b>Conversion History</b><span>Recent exports</span></div></div><div class="history-empty"><div class="big">◷</div><h3>No recent conversions</h3><p>Converted files will appear here in a future update.</p><button class="btn primary" data-go="convertScreen">Start conversion</button></div></section>
+<section id="settingsScreen" class="screen"><div class="top"><button class="circle-btn" data-go="homeScreen">‹</button><div class="brandcopy"><b>Settings</b><span>App preferences</span></div></div><div class="card"><div class="settings-row"><div><b>Appearance</b><span>Switch light / dark mode</span></div><div class="grow"></div><button class="circle-btn" id="themeToggle2">◐</button></div><div class="settings-row"><div><b>Default CRS</b><span>EPSG:32643 · UTM Zone 43N</span></div></div><div class="settings-row"><div><b>Transformer label</b><span>Pole + EquipmentType + EquipmentUse</span></div></div><div class="settings-row"><div><b>Privacy</b><span>Local processing only</span></div></div></div></section>
 </div>
-<div id="toast" class="toast">Done</div>
+<nav class="bottom-nav"><button class="nav-btn active" data-screen="homeScreen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 11 9-8 9 8v9H3z"/></svg>Home</button><button class="nav-btn" data-screen="convertScreen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 7h11l-3-3M17 17H6l3 3"/></svg>Convert</button><button class="nav-btn" data-screen="historyScreen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>History</button><button class="nav-btn" data-screen="settingsScreen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M7 12h10M10 18h4"/></svg>More</button></nav>
+<div id="menuBackdrop" class="menu-backdrop"></div><aside id="menuSheet" class="menu-sheet"><div class="menu-head"><div class="brandmark">T</div><div class="brandcopy"><b>Transformer KML</b><span>Menu</span></div><div class="grow"></div><button id="closeMenu" class="circle-btn">×</button></div><div class="menu-list"><button id="menuConvert"><div class="mi">⇄</div><div><b>New conversion</b><span>CSV to KML</span></div></button><button id="menuHistory"><div class="mi">◷</div><div><b>History</b><span>Recent conversions</span></div></button><button id="menuSettings"><div class="mi">⚙</div><div><b>Settings</b><span>Theme and mapping</span></div></button></div></aside><div id="toast" class="toast">Done</div>
 <script>
 'use strict';
 const $=id=>document.getElementById(id);
@@ -273,6 +137,19 @@ const mappingToggle=$('mappingToggle'),mappingWrap=$('mappingWrap');mappingToggl
 const uploadZone=$('uploadZone');['dragenter','dragover'].forEach(e=>uploadZone.addEventListener(e,ev=>{ev.preventDefault();uploadZone.classList.add('drag')}));['dragleave','drop'].forEach(e=>uploadZone.addEventListener(e,ev=>{ev.preventDefault();uploadZone.classList.remove('drag')}));uploadZone.addEventListener('drop',e=>handleFile(e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0]));
 const themeBtn=$('themeBtn');function applyTheme(t){document.documentElement.setAttribute('data-theme',t);document.querySelector('meta[name="theme-color"]').setAttribute('content',t==='dark'?'#08111f':'#0B1220');try{localStorage.setItem('kml-theme',t)}catch(e){}}
 let theme='light';try{theme=localStorage.getItem('kml-theme')||'light'}catch(e){}applyTheme(theme);themeBtn.addEventListener('click',()=>{theme=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';applyTheme(theme);toast(theme==='dark'?'Dark theme on':'Light theme on')});
-</script>
-</body>
-</html>
+
+
+// Mobile banking-style navigation
+const screens=[...document.querySelectorAll('.screen')];
+function openScreen(id){screens.forEach(s=>s.classList.toggle('active',s.id===id));document.querySelectorAll('[data-screen]').forEach(b=>b.classList.toggle('active',b.dataset.screen===id));window.scrollTo({top:0,behavior:'smooth'});}
+document.querySelectorAll('[data-screen]').forEach(b=>b.addEventListener('click',()=>openScreen(b.dataset.screen)));
+document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>openScreen(b.dataset.go)));
+const menuSheet=$('menuSheet'),menuBackdrop=$('menuBackdrop');
+function toggleMenu(open){menuSheet.classList.toggle('open',open);menuBackdrop.classList.toggle('open',open);document.body.classList.toggle('locked',open)}
+$('openMenu').addEventListener('click',()=>toggleMenu(true));$('closeMenu').addEventListener('click',()=>toggleMenu(false));menuBackdrop.addEventListener('click',()=>toggleMenu(false));
+$('menuConvert').addEventListener('click',()=>{toggleMenu(false);openScreen('convertScreen')});
+$('menuHistory').addEventListener('click',()=>{toggleMenu(false);openScreen('historyScreen')});
+$('menuSettings').addEventListener('click',()=>{toggleMenu(false);openScreen('settingsScreen')});
+openScreen('homeScreen');
+$('themeToggle2').addEventListener('click',()=>$('themeToggle').click());
+</script></body></html>
